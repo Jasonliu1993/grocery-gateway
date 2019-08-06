@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/default.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <property name="LOG_FILE" value="/Users/Jason/Desktop/spring.log"/>
+    <property name="ACCESS_LOG_FILE" value="/Users/Jason/Desktop/netty_access_log.log"/>
+
+    <!--    <conversionRule conversionWord="msg" converterClass=""/>-->
+
+    <!--  文件日志打印  -->
+    <appender name="ROLLIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <Pattern>
+                <![CDATA[ %d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } -&#45;&#45; [%t] %-40.40logger{39} : %msg%n]]>
+            </Pattern>
+        </encoder>
+        <file>${LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+    <!--  控制台日志打印  -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                <![CDATA[ %d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } -&#45;&#45; [%t] %-40.40logger{39} : %msg%n]]>
+            </pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!--netty的access log 配置，在启动时需要添加参数
+    java -jar -Dreactor.netty.http.server.accessLogEnabled=true -DACCESS_LOG_FILE="/Users/Jason/Desktop/netty_access_log.log" grocery-gateway-0.0.1-SNAPSHOT.jar
+    -->
+    <appender name="accessLog" class="ch.qos.logback.core.FileAppender">
+        <file>${ACCESS_LOG_FILE}</file>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+    <!--异步打印accesslog日志-->
+    <appender name="async" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="accessLog"/>
+    </appender>
+
+    <logger name="reactor.netty.http.server.AccessLog" level="INFO" additivity="false">
+        <appender-ref ref="async"/>
+    </logger>
+
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!dev">
+        <root level="INFO">
+            <appender-ref ref="ROLLIN"/>
+        </root>
+    </springProfile>
+
+</configuration>
